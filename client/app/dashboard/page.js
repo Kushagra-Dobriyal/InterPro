@@ -6,16 +6,22 @@ import API_URL from '../config';
 export default function Dashboard() {
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [sseConnected, setSseConnected] = useState(false);
   const eventSourceRef = useRef(null);
 
   const fetchDashboard = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/dashboard`);
+      const url = `${API_URL}/api/dashboard`;
+      console.log('Fetching dashboard from:', url);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setProviders(data);
+      setError(null);
     } catch (err) {
       console.error('Failed to fetch dashboard:', err);
+      setError(`Failed to load: ${err.message}. API: ${API_URL}`);
     } finally {
       setLoading(false);
     }
@@ -50,6 +56,17 @@ export default function Dashboard() {
 
   if (loading) {
     return <div className="max-w-5xl mx-auto p-8"><p className="text-gray-500">Loading dashboard...</p></div>;
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-5xl mx-auto p-8">
+        <p className="text-red-600 bg-red-50 border border-red-200 p-4 rounded">{error}</p>
+        <button onClick={() => { setLoading(true); fetchDashboard(); }} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded text-sm">
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (
